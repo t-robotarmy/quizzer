@@ -33,7 +33,12 @@
     <main>
       <!-- Quiz -->
       <section id="quiz" class="quiz hidden">
-        <div class="prompt">What percentile is this hand?</div>
+        <div class="mode-switch">
+          <button class="mode-btn active" data-mode="percentile">Percentile</button>
+          <button class="mode-btn" data-mode="position">Play or Fold</button>
+        </div>
+
+        <div id="prompt" class="prompt">What percentile is this hand?</div>
 
         <div id="card-area" class="card-area"></div>
 
@@ -43,43 +48,82 @@
           <span id="card-meta" class="card-meta"></span>
         </div>
 
-        <div class="guess-controls">
-          <div class="guess-readout">
-            <span class="guess-num" id="guess-display">50</span>
-            <span class="guess-suffix">/100</span>
+        <!-- Percentile mode: guess the number -->
+        <div id="mode-percentile" class="mode-block">
+          <div class="guess-controls">
+            <div class="guess-readout">
+              <span class="guess-num" id="guess-display">50</span>
+              <span class="guess-suffix">/100</span>
+            </div>
+            <input type="range" id="slider" min="0" max="100" value="50" class="slider">
+            <div class="scale-hint"><span>0 · best</span><span>100 · worst</span></div>
+            <div class="number-row">
+              <label for="guess">Your guess:</label>
+              <input type="number" id="guess" min="0" max="100" value="50" class="guess-input">
+            </div>
           </div>
-          <input type="range" id="slider" min="0" max="100" value="50" class="slider">
-          <div class="scale-hint"><span>0 · best</span><span>100 · worst</span></div>
-          <div class="number-row">
-            <label for="guess">Your guess:</label>
-            <input type="number" id="guess" min="0" max="100" value="50" class="guess-input">
-          </div>
+          <button id="reveal-btn" class="reveal-btn">Reveal <span class="kbd">space</span></button>
         </div>
 
-        <button id="reveal-btn" class="reveal-btn">Reveal <span class="kbd">space</span></button>
+        <!-- Position mode: open or fold -->
+        <div id="mode-position" class="mode-block hidden">
+          <div class="seat-banner">
+            <span id="seat-table" class="seat-table">9-max</span>
+            <span id="seat-name" class="seat-name">UTG</span>
+            <span class="seat-sub">first to act — would you open?</span>
+          </div>
+          <div class="action-btns">
+            <button id="open-btn" class="action-btn open">Open / Raise <span class="kbd">O</span></button>
+            <button id="fold-btn" class="action-btn fold">Fold <span class="kbd">F</span></button>
+          </div>
+        </div>
 
         <!-- Answer -->
         <div id="answer-box" class="answer-box hidden">
           <div id="verdict" class="verdict"></div>
-          <div class="answer-nums">
-            <div class="anum"><label>Actual</label><span id="actual-val">0</span></div>
-            <div class="anum ghost"><label>You said</label><span id="guess-val">0</span></div>
-            <div class="anum ghost"><label>Result</label><span id="error-val">—</span></div>
+
+          <!-- percentile-mode answer -->
+          <div id="ans-percentile">
+            <div class="answer-nums">
+              <div class="anum"><label>Actual</label><span id="actual-val">0</span></div>
+              <div class="anum ghost"><label>You said</label><span id="guess-val">0</span></div>
+              <div class="anum ghost"><label>Result</label><span id="error-val">—</span></div>
+            </div>
+            <div class="answer-scale">
+              <div class="scale-track"></div>
+              <div id="band-hard" class="band hard"></div>
+              <div id="band-good" class="band good"></div>
+              <div id="band-easy" class="band easy"></div>
+              <div id="marker-guess" class="marker guess" title="Your guess"></div>
+              <div id="marker-actual" class="marker actual" title="Actual"></div>
+            </div>
+            <div class="scale-legend">
+              <span><i class="dot easy"></i>Easy</span>
+              <span><i class="dot good"></i>Good</span>
+              <span><i class="dot hard"></i>Hard</span>
+              <span><i class="dot actual"></i>Actual</span>
+              <span><i class="dot guess"></i>You</span>
+            </div>
           </div>
-          <div class="answer-scale">
-            <div class="scale-track"></div>
-            <div id="band-hard" class="band hard"></div>
-            <div id="band-good" class="band good"></div>
-            <div id="band-easy" class="band easy"></div>
-            <div id="marker-guess" class="marker guess" title="Your guess"></div>
-            <div id="marker-actual" class="marker actual" title="Actual"></div>
-          </div>
-          <div class="scale-legend">
-            <span><i class="dot easy"></i>Easy</span>
-            <span><i class="dot good"></i>Good</span>
-            <span><i class="dot hard"></i>Hard</span>
-            <span><i class="dot actual"></i>Actual</span>
-            <span><i class="dot guess"></i>You</span>
+
+          <!-- position-mode answer -->
+          <div id="ans-position" class="hidden">
+            <div class="answer-nums">
+              <div class="anum"><label>This hand</label><span id="pos-pct">0</span></div>
+              <div class="anum ghost"><label>Seat opens</label><span id="pos-thresh">top 0%</span></div>
+              <div class="anum ghost"><label>Correct play</label><span id="pos-correct">—</span></div>
+            </div>
+            <div class="answer-scale">
+              <div class="scale-track"></div>
+              <div id="open-zone" class="band open"></div>
+              <div id="marker-thresh" class="marker thresh" title="Opening cutoff"></div>
+              <div id="marker-hand" class="marker actual" title="This hand"></div>
+            </div>
+            <div class="scale-legend">
+              <span><i class="dot open"></i>Open range</span>
+              <span><i class="dot thresh"></i>Cutoff</span>
+              <span><i class="dot actual"></i>This hand</span>
+            </div>
           </div>
         </div>
 

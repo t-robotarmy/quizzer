@@ -37,19 +37,26 @@ function getCard(state, id) {
 //   within EASY margin -> Easy, within GOOD -> Good, within HARD -> Hard,
 //   otherwise Wrong.
 //
-// The margin of error SHRINKS as the hand gets stronger (lower percentile):
-// precision matters for premium hands (is this the 8th or the 12th percentile?
-// that changes whether you play it), but barely matters for weak hands (60th vs
-// 80th is the same fold at a full table). So the tightest tolerances are at the
-// top of the chart. The base margins below (in percentile points) are the
-// WIDEST case and apply at p = 100 (weakest); they shrink to TOLERANCE_MIN_FACTOR
-// of that at p = 0 (strongest). All four numbers are meant to be tuned by feel.
-const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 };
-const TOLERANCE_MIN_FACTOR = 0.25; // margin at p=0 as a fraction of the base
+// The margin of error SHRINKS as the hand gets stronger (lower percentile),
+// and stays tight across the whole *decision zone*. Every open/fold call you
+// make lives in roughly the top ~50 percentiles (UTG ~8% up to the button
+// ~48%), so precision has to hold across that band, not just at the very top.
+// Past ~50 you're folding regardless, so tolerance can blow out.
+//
+// TOLERANCE_BASE are the WIDEST margins and apply at p = 100 (weakest). They
+// shrink toward p = 0 via a power curve: GAMMA > 1 keeps the top of the chart
+// tight and only loosens once you're deep in the fold zone. All four knobs are
+// meant to be tuned by feel.
+//   GAMMA = 1  -> linear   (loosens early)
+//   GAMMA ~2.2 -> tight through the whole open/fold band, then opens up
+const TOLERANCE_BASE = { easy: 18, good: 28, hard: 40 };
+const TOLERANCE_MIN_FACTOR = 0.18; // margin at p=0 as a fraction of the base
+const TOLERANCE_GAMMA = 2.2;
 
 // Absolute point-margin allowed at percentile p for a given base margin.
 function toleranceAt(p, base) {
-  const factor = TOLERANCE_MIN_FACTOR + (1 - TOLERANCE_MIN_FACTOR) * (p / 100);
+  const factor = TOLERANCE_MIN_FACTOR
+    + (1 - TOLERANCE_MIN_FACTOR) * Math.pow(p / 100, TOLERANCE_GAMMA);
   return base * factor;
 }
 
@@ -74,6 +81,24 @@ function gradeGuess(p, g) {
   else if (err <= tol.hard) grade = 'hard';
   else grade = 'wrong';
   return { grade, quality: GRADE_QUALITY[grade], err, tol };
+}
+
+// Grade a play-or-fold decision against a seat's opening threshold.
+// action is 'open' or 'fold'. Hands within POSITION_CLOSE of the threshold are
+// "marginal" (mixed in practice), so being on the wrong side there is only Hard,
+// and being right there is only Good rather than Easy.
+const POSITION_CLOSE = 4;
+function gradePositionDecision(p, threshold, action) {
+  const shouldOpen = p <= threshold;
+  const correct = (action === 'open') === shouldOpen;
+  const dist = Math.abs(p - threshold);
+  const close = dist <= POSITION_CLOSE;
+  let grade;
+  if (correct && !close) grade = 'easy';
+  else if (correct) grade = 'good';
+  else if (close) grade = 'hard';
+  else grade = 'wrong';
+  return { grade, quality: GRADE_QUALITY[grade], correct, shouldOpen, dist, close };
 }
 
 // Apply an SM-2 update. quality 0-5. now = current timestamp.

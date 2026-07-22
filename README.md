@@ -8,7 +8,14 @@ Each hand is shown as a pair of **realistic playing cards** — proper pip
 layouts, face cards, and suits chosen at random each time (a suited hand shares
 one suit; pairs and offsuit hands get two different suits).
 
-## How it works
+Two study modes share the same spaced-repetition schedule:
+
+- **Percentile** — guess the hand's exact rank.
+- **Play or Fold** — a hand is dealt for a random seat (table size + position);
+  you decide whether to open (raise first in) or fold. Trains the actual
+  decision rather than an abstract number.
+
+## Percentile mode
 
 1. A hand is dealt as two cards (e.g. `A♠ 5♦`).
 2. You guess its percentile using the slider or the number box (0–100).
@@ -27,18 +34,24 @@ The grade is computed automatically from how close your guess is:
 | Wrong  | outside all bands |
 
 Crucially, **the margin of error shrinks as the hand gets stronger** (lower
-percentile). Precision matters at the top — whether a hand is the 8th or 12th
-percentile decides whether you play it — but for weak hands it's irrelevant
-(60th vs 80th is the same fold at a full table). So the base margins
-(±20 / ±30 / ±40 points for Easy / Good / Hard) are the *widest* case and apply
-at `p = 100`, tightening toward `p = 0`. At `72o` (p=100) you have ±20 to still
-score Easy; at `AA` (p=0) that tightens to ±5.
+percentile), and it stays tight across the whole *decision zone*. Every
+open/fold call lives in roughly the top ~50 percentiles (UTG ~8% up to the
+button ~48%), so precision has to hold across that entire band — not just at
+the very top — then blow out in the fold zone where rank is irrelevant (60th vs
+80th is the same fold).
 
-All four knobs live at the top of `srs.js` and are meant to be tuned by feel:
+To get that shape, the margin follows a **power curve**: the base margins are
+the *widest* case (at `p = 100`) and shrink toward `p = 0`, with `GAMMA > 1`
+keeping the top of the chart tight until you're deep in the fold zone. Easy
+margin works out to ≈ ±3.3 at the 8th percentile, ±3.9 at the 25th, ±5.8 at the
+45th, then ±10 by the 70th and ±18 at the bottom.
+
+All three knobs live at the top of `srs.js` and are meant to be tuned by feel:
 
 ```js
-const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 }; // margins at p=100 (weakest)
-const TOLERANCE_MIN_FACTOR = 0.25;                        // fraction of that at p=0 (strongest)
+const TOLERANCE_BASE = { easy: 18, good: 28, hard: 40 }; // widest margins, at p=100
+const TOLERANCE_MIN_FACTOR = 0.18;   // fraction of that at p=0 (strongest)
+const TOLERANCE_GAMMA = 2.2;         // 1 = linear; higher = only the top matters
 ```
 
 ### Spaced repetition (SM-2)
@@ -52,7 +65,36 @@ Scheduling uses the classic **SM-2 algorithm** (the SuperMemo / Anki family):
 - Progress is saved in `localStorage`, so due cards persist across sessions.
 
 Each session pulls all **due** cards first (most overdue first), then introduces
-up to 15 **new** hands.
+up to 15 **new** hands. Both modes feed the same schedule, since both test the
+same underlying knowledge of a hand's strength.
+
+## Play or Fold mode
+
+A hand is dealt alongside a random seat — table size (`9-max` / `6-max`) and
+position (`UTG`, `MP`, `HJ`, `CO`, `BTN`, `SB`). You choose **Open / Raise** or
+**Fold**; the reveal shows the hand's percentile against that seat's opening
+cutoff, with the open range shaded on the scale.
+
+Each seat has a "top X%" opening (raise-first-in) threshold — a hand is an open
+if its percentile ≤ threshold. Hands near the cutoff are treated as marginal
+(mixed in practice), so being on the wrong side there only costs a **Hard**, not
+a **Wrong**. The thresholds are approximate — a blend of Sklansky-style
+positional tightening and modern GTO frequencies — and live in the `POSITIONS`
+table at the top of `app.js`, ready to match whatever ranges your class uses:
+
+```js
+const POSITIONS = [
+  { table: '9-max', seat: 'UTG', threshold: 9 },
+  { table: '9-max', seat: 'CO',  threshold: 26 },
+  { table: '9-max', seat: 'BTN', threshold: 46 },
+  // …edit / add rows freely
+];
+```
+
+> Note: a single global ranking is a simplification — real ranges re-order hands
+> by situation (suited connectors and small pairs gain value multiway/deep;
+> offsuit broadways lose it). This mode builds the positional backbone; pair it
+> with a full range tool as you go deeper.
 
 ## Run it
 
@@ -67,7 +109,8 @@ python3 -m http.server 8000
 
 | Key       | Action                        |
 |-----------|-------------------------------|
-| `Space` / `Enter` | Reveal, then advance to the next hand |
+| `Space` / `Enter` | Reveal (percentile mode), then advance to the next hand |
+| `O` / `F` | Open / Fold (Play or Fold mode) |
 
 ## Files
 
