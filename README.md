@@ -26,18 +26,19 @@ The grade is computed automatically from how close your guess is:
 | Hard   | the Hard margin  |
 | Wrong  | outside all bands |
 
-Crucially, **the margin of error grows as the hand gets stronger** (lower
-percentile), because premium hands cluster tightly at the top of the chart, so
-an absolute miss there is more forgivable. The base margins (±20 / ±30 / ±40
-points for Easy / Good / Hard) apply at `p = 0` and shrink smoothly toward
-`p = 100`. So at `AA` (p=0) you have ±20 to still score Easy; at `72o` (p=100)
-that tightens to ±7.
+Crucially, **the margin of error shrinks as the hand gets stronger** (lower
+percentile). Precision matters at the top — whether a hand is the 8th or 12th
+percentile decides whether you play it — but for weak hands it's irrelevant
+(60th vs 80th is the same fold at a full table). So the base margins
+(±20 / ±30 / ±40 points for Easy / Good / Hard) are the *widest* case and apply
+at `p = 100`, tightening toward `p = 0`. At `72o` (p=100) you have ±20 to still
+score Easy; at `AA` (p=0) that tightens to ±5.
 
 All four knobs live at the top of `srs.js` and are meant to be tuned by feel:
 
 ```js
-const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 }; // margins at p=0
-const TOLERANCE_MIN_FACTOR = 0.35;                        // fraction of that at p=100
+const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 }; // margins at p=100 (weakest)
+const TOLERANCE_MIN_FACTOR = 0.25;                        // fraction of that at p=0 (strongest)
 ```
 
 ### Spaced repetition (SM-2)

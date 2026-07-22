@@ -37,17 +37,19 @@ function getCard(state, id) {
 //   within EASY margin -> Easy, within GOOD -> Good, within HARD -> Hard,
 //   otherwise Wrong.
 //
-// The margin of error GROWS as the hand gets stronger (lower percentile),
-// because premium hands are clustered tightly at the top of the chart, so a
-// given absolute miss there is more forgivable. The base margins below (in
-// percentile points) apply at p = 0 and shrink to TOLERANCE_MIN_FACTOR of
-// that at p = 100. All four numbers are meant to be tuned by feel.
+// The margin of error SHRINKS as the hand gets stronger (lower percentile):
+// precision matters for premium hands (is this the 8th or the 12th percentile?
+// that changes whether you play it), but barely matters for weak hands (60th vs
+// 80th is the same fold at a full table). So the tightest tolerances are at the
+// top of the chart. The base margins below (in percentile points) are the
+// WIDEST case and apply at p = 100 (weakest); they shrink to TOLERANCE_MIN_FACTOR
+// of that at p = 0 (strongest). All four numbers are meant to be tuned by feel.
 const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 };
-const TOLERANCE_MIN_FACTOR = 0.35; // margin at p=100 as a fraction of the base
+const TOLERANCE_MIN_FACTOR = 0.25; // margin at p=0 as a fraction of the base
 
 // Absolute point-margin allowed at percentile p for a given base margin.
 function toleranceAt(p, base) {
-  const factor = 1 - (1 - TOLERANCE_MIN_FACTOR) * (p / 100);
+  const factor = TOLERANCE_MIN_FACTOR + (1 - TOLERANCE_MIN_FACTOR) * (p / 100);
   return base * factor;
 }
 
