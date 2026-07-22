@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker Percentile Trainer</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-suits" aria-hidden="true">♠♥♦♣</span>
+        <div>
+          <h1>Percentile Trainer</h1>
+          <p class="tagline">Learn every starting hand's rank with spaced repetition</p>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span id="stat-learned">0</span><label>Learned</label></div>
+        <div class="stat due"><span id="stat-due">0</span><label>Due</label></div>
+        <div class="stat"><span id="stat-new">0</span><label>New</label></div>
+        <div class="stat"><span id="stat-mature">0</span><label>Mastered</label></div>
+      </div>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+      <span id="progress-label" class="progress-label">0/169 hands learned</span>
+    </div>
+
+    <main>
+      <!-- Quiz -->
+      <section id="quiz" class="quiz hidden">
+        <div class="prompt">What percentile is this hand?</div>
+
+        <div id="card-area" class="card-area"></div>
+
+        <div class="hand-info">
+          <span id="hand-label" class="hand-label">--</span>
+          <span id="hand-type" class="type-badge">--</span>
+          <span id="card-meta" class="card-meta"></span>
+        </div>
+
+        <div class="guess-controls">
+          <div class="guess-readout">
+            <span class="guess-num" id="guess-display">50</span>
+            <span class="guess-suffix">/100</span>
+          </div>
+          <input type="range" id="slider" min="0" max="100" value="50" class="slider">
+          <div class="scale-hint"><span>0 · best</span><span>100 · worst</span></div>
+          <div class="number-row">
+            <label for="guess">Your guess:</label>
+            <input type="number" id="guess" min="0" max="100" value="50" class="guess-input">
+          </div>
+        </div>
+
+        <button id="reveal-btn" class="reveal-btn">Reveal <span class="kbd">space</span></button>
+
+        <!-- Answer -->
+        <div id="answer-box" class="answer-box hidden">
+          <div id="verdict" class="verdict"></div>
+          <div class="answer-nums">
+            <div class="anum"><label>Actual</label><span id="actual-val">0</span></div>
+            <div class="anum ghost"><label>You said</label><span id="guess-val">0</span></div>
+            <div class="anum ghost"><label>Result</label><span id="error-val">—</span></div>
+          </div>
+          <div class="answer-scale">
+            <div class="scale-track"></div>
+            <div id="marker-guess" class="marker guess" title="Your guess"></div>
+            <div id="marker-actual" class="marker actual" title="Actual"></div>
+          </div>
+          <div class="scale-legend">
+            <span><i class="dot actual"></i>Actual</span>
+            <span><i class="dot guess"></i>Your guess</span>
+          </div>
+        </div>
+
+        <div id="grade-row" class="grade-row hidden">
+          <p class="grade-prompt">How well did you know it?</p>
+          <div class="grade-btns">
+            <button class="grade-btn again" data-grade="again">Again<span class="kbd">1</span></button>
+            <button class="grade-btn hard" data-grade="hard">Hard<span class="kbd">2</span></button>
+            <button class="grade-btn good" data-grade="good">Good<span class="kbd">3</span></button>
+            <button class="grade-btn easy" data-grade="easy">Easy<span class="kbd">4</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Done -->
+      <section id="done-screen" class="done-screen hidden">
+        <div class="done-emoji">🃏</div>
+        <h2>All caught up</h2>
+        <p id="done-msg"></p>
+        <button id="next-btn" class="reveal-btn">Practice anyway</button>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="session">
+        Session: <strong id="session-count">0</strong> reviewed ·
+        <strong id="session-acc">—</strong> accuracy
+      </div>
+      <button id="reset-btn" class="reset-btn">Reset progress</button>
+    </footer>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="cards.js"></script>
+  <script src="srs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
