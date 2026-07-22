@@ -68,23 +68,25 @@
           </div>
           <div class="answer-scale">
             <div class="scale-track"></div>
+            <div id="band-hard" class="band hard"></div>
+            <div id="band-good" class="band good"></div>
+            <div id="band-easy" class="band easy"></div>
             <div id="marker-guess" class="marker guess" title="Your guess"></div>
             <div id="marker-actual" class="marker actual" title="Actual"></div>
           </div>
           <div class="scale-legend">
+            <span><i class="dot easy"></i>Easy</span>
+            <span><i class="dot good"></i>Good</span>
+            <span><i class="dot hard"></i>Hard</span>
             <span><i class="dot actual"></i>Actual</span>
-            <span><i class="dot guess"></i>Your guess</span>
+            <span><i class="dot guess"></i>You</span>
           </div>
         </div>
 
-        <div id="grade-row" class="grade-row hidden">
-          <p class="grade-prompt">How well did you know it?</p>
-          <div class="grade-btns">
-            <button class="grade-btn again" data-grade="again">Again<span class="kbd">1</span></button>
-            <button class="grade-btn hard" data-grade="hard">Hard<span class="kbd">2</span></button>
-            <button class="grade-btn good" data-grade="good">Good<span class="kbd">3</span></button>
-            <button class="grade-btn easy" data-grade="easy">Easy<span class="kbd">4</span></button>
-          </div>
+        <div id="grade-result" class="grade-result hidden">
+          <div id="grade-badge" class="grade-badge">Good</div>
+          <p id="grade-note" class="grade-note"></p>
+          <button id="continue-btn" class="reveal-btn">Next <span class="kbd">space</span></button>
         </div>
       </section>
 

@@ -53,10 +53,18 @@ function renderQuestion() {
   el('guess-display').textContent = '50';
   el('answer-box').classList.add('hidden');
   el('reveal-btn').classList.remove('hidden');
-  el('grade-row').classList.add('hidden');
+  el('grade-result').classList.add('hidden');
   el('guess').disabled = false;
   el('slider').disabled = false;
   el('guess').focus();
+}
+
+// Position a tolerance band (a centered ±tol window) on the 0-100 scale.
+function placeBand(id, center, tol) {
+  const lo = Math.max(0, center - tol);
+  const hi = Math.min(100, center + tol);
+  el(id).style.left = lo + '%';
+  el(id).style.width = (hi - lo) + '%';
 }
 
 function syncGuess(v) {
@@ -66,13 +74,20 @@ function syncGuess(v) {
   el('guess-display').textContent = v;
 }
 
+const GRADE_META = {
+  easy:  { label: 'Easy',  cls: 'great', emoji: '🎯' },
+  good:  { label: 'Good',  cls: 'good',  emoji: '👍' },
+  hard:  { label: 'Hard',  cls: 'meh',   emoji: '😬' },
+  wrong: { label: 'Wrong', cls: 'bad',   emoji: '❌' }
+};
+
 function reveal() {
   if (revealed) return;
   revealed = true;
   const guess = Math.max(0, Math.min(100, Math.round(Number(el('guess').value) || 0)));
   const actual = current.percentile;
-  const err = Math.abs(guess - actual);
-  const autoQ = qualityFromError(err);
+  const res = gradeGuess(actual, guess);
+  const meta = GRADE_META[res.grade];
 
   el('guess').disabled = true;
   el('slider').disabled = true;
@@ -80,43 +95,46 @@ function reveal() {
 
   el('actual-val').textContent = actual;
   el('guess-val').textContent = guess;
-  el('error-val').textContent = err === 0 ? 'exact!' : `off by ${err}`;
+  el('error-val').textContent = res.err === 0 ? 'exact!' : `off by ${res.err}`;
 
   const verdict = el('verdict');
-  if (err === 0) { verdict.textContent = '🎯 Perfect'; verdict.className = 'verdict great'; }
-  else if (err <= 3) { verdict.textContent = '✅ Excellent'; verdict.className = 'verdict great'; }
-  else if (err <= 8) { verdict.textContent = '👍 Close'; verdict.className = 'verdict good'; }
-  else if (err <= 15) { verdict.textContent = '😬 Rough'; verdict.className = 'verdict meh'; }
-  else { verdict.textContent = '❌ Way off'; verdict.className = 'verdict bad'; }
+  verdict.textContent = `${meta.emoji} ${meta.label}`;
+  verdict.className = 'verdict ' + meta.cls;
 
-  // position markers on the scale
+  // draw tolerance bands (widest first) then the two markers
+  placeBand('band-hard', actual, res.tol.hard);
+  placeBand('band-good', actual, res.tol.good);
+  placeBand('band-easy', actual, res.tol.easy);
   el('marker-actual').style.left = actual + '%';
   el('marker-guess').style.left = guess + '%';
 
   el('answer-box').classList.remove('hidden');
-  el('grade-row').classList.remove('hidden');
 
-  // highlight the suggested grade button
-  document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('suggested'));
-  const map = { 5: 'easy', 4: 'good', 3: 'good', 2: 'hard', 1: 'again', 0: 'again' };
-  const suggestedBtn = document.querySelector(`.grade-btn[data-grade="${map[autoQ]}"]`);
-  if (suggestedBtn) suggestedBtn.classList.add('suggested');
+  // grade badge + explanatory note
+  const badge = el('grade-badge');
+  badge.textContent = meta.label;
+  badge.className = 'grade-badge ' + meta.cls;
+  const within = res.grade === 'wrong'
+    ? `outside the Hard band (±${res.tol.hard.toFixed(0)})`
+    : `within the ${meta.label} band (±${res.tol[res.grade].toFixed(0)})`;
+  el('grade-note').textContent = `Off by ${res.err} — ${within} at this percentile.`;
+  el('grade-result').classList.remove('hidden');
 
-  if (autoQ >= 3) sessionCorrect++;
-}
-
-function grade(gradeName) {
-  if (!revealed) return;
-  const qMap = { again: 1, hard: 3, good: 4, easy: 5 };
+  // grading is automatic: apply the SM-2 update immediately
   const card = getCard(state, current.id);
-  review(card, qMap[gradeName], Date.now());
+  review(card, res.quality, Date.now());
   saveState(state);
   sessionCount++;
+  if (res.quality >= 3) sessionCorrect++;
   el('session-count').textContent = sessionCount;
   el('session-acc').textContent = sessionCount
     ? Math.round((sessionCorrect / sessionCount) * 100) + '%'
     : '—';
   refreshStats();
+}
+
+function advance() {
+  if (!revealed) return;
   nextCard();
 }
 
@@ -136,9 +154,7 @@ el('guess').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !revealed) { e.preventDefault(); reveal(); }
 });
 el('reveal-btn').addEventListener('click', reveal);
-document.querySelectorAll('.grade-btn').forEach(btn => {
-  btn.addEventListener('click', () => grade(btn.dataset.grade));
-});
+el('continue-btn').addEventListener('click', advance);
 el('next-btn').addEventListener('click', () => { queue = []; nextCard(); });
 el('reset-btn').addEventListener('click', () => {
   if (confirm('Reset all learning progress? This cannot be undone.')) {
@@ -153,13 +169,12 @@ el('reset-btn').addEventListener('click', () => {
   }
 });
 
-// keyboard grading: 1=again 2=hard 3=good 4=easy, space=reveal
+// space / enter: reveal the answer, then advance to the next hand
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT') return;
-  if (!revealed && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); reveal(); return; }
-  if (revealed) {
-    const keys = { '1': 'again', '2': 'hard', '3': 'good', '4': 'easy' };
-    if (keys[e.key]) { e.preventDefault(); grade(keys[e.key]); }
+  if (e.key === ' ' || e.key === 'Enter') {
+    e.preventDefault();
+    if (revealed) advance(); else reveal();
   }
 });
 

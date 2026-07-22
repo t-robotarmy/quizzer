@@ -189,41 +189,40 @@ h1 { font-size: 22px; margin: 0; letter-spacing: -.3px; }
 
 .answer-scale { position: relative; height: 30px; margin: 6px 4px 4px; }
 .scale-track {
-  position: absolute; top: 13px; left: 0; right: 0; height: 8px; border-radius: 99px;
-  background: linear-gradient(90deg, var(--green), var(--yellow), var(--orange), var(--red));
+  position: absolute; top: 13px; left: 0; right: 0; height: 10px; border-radius: 99px;
+  background: #12162e; border: 1px solid var(--line);
 }
-.marker { position: absolute; top: 4px; width: 3px; height: 26px; transform: translateX(-50%); border-radius: 2px; }
+.band { position: absolute; top: 13px; height: 10px; border-radius: 99px; }
+.band.hard { background: rgba(255,159,69,.55); }
+.band.good { background: rgba(255,207,92,.65); }
+.band.easy { background: rgba(61,220,151,.8); }
+.marker { position: absolute; top: 4px; width: 3px; height: 26px; transform: translateX(-50%); border-radius: 2px; z-index: 2; }
 .marker.actual { background: #fff; box-shadow: 0 0 0 2px var(--bg2); }
 .marker.actual::after {
   content: '▼'; position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
   font-size: 10px; color: #fff;
 }
-.marker.guess { background: #000; opacity: .75; }
-.scale-legend { display: flex; justify-content: center; gap: 18px; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.marker.guess { background: #000; opacity: .8; box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+.scale-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: 12px; color: var(--muted); margin-top: 8px; }
 .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 .dot.actual { background: #fff; }
-.dot.guess { background: #000; border: 1px solid #666; }
+.dot.guess { background: #000; border: 1px solid #999; }
+.dot.easy { background: var(--green); }
+.dot.good { background: var(--yellow); }
+.dot.hard { background: var(--orange); }
 
-/* ---- Grading ---- */
-.grade-row { margin-top: 18px; }
-.grade-prompt { text-align: center; font-size: 13px; color: var(--muted); margin: 0 0 10px; }
-.grade-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.grade-btn {
-  padding: 12px 4px; border-radius: 12px; border: 1px solid var(--line);
-  background: var(--panel); color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  transition: transform .08s ease, border-color .2s ease, background .2s ease;
+/* ---- Grade result (auto-graded) ---- */
+.grade-result { margin-top: 18px; text-align: center; }
+.grade-badge {
+  display: inline-block; padding: 6px 22px; border-radius: 99px;
+  font-size: 18px; font-weight: 800; letter-spacing: .5px; margin-bottom: 8px;
+  border: 1px solid var(--line);
 }
-.grade-btn .kbd { margin-left: 0; }
-.grade-btn:hover { transform: translateY(-1px); }
-.grade-btn.again:hover { border-color: var(--red); }
-.grade-btn.hard:hover { border-color: var(--orange); }
-.grade-btn.good:hover { border-color: var(--green); }
-.grade-btn.easy:hover { border-color: var(--accent); }
-.grade-btn.suggested {
-  box-shadow: 0 0 0 2px var(--accent) inset;
-  background: var(--panel-2);
-}
+.grade-badge.great { color: var(--green); border-color: #1f6b4d; background: rgba(61,220,151,.1); }
+.grade-badge.good { color: var(--yellow); border-color: #6b5a2a; background: rgba(255,207,92,.1); }
+.grade-badge.meh { color: var(--orange); border-color: #6b4a2a; background: rgba(255,159,69,.1); }
+.grade-badge.bad { color: var(--red); border-color: #6b2a3a; background: rgba(255,92,122,.1); }
+.grade-note { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
 
 /* ---- Done screen ---- */
 .done-screen { text-align: center; }

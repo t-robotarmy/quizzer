@@ -32,14 +32,46 @@ function getCard(state, id) {
   return state[id];
 }
 
-// Map a numeric guessing error (0-100) to an SM-2 quality score (0-5).
-function qualityFromError(err) {
-  if (err <= 0) return 5;
-  if (err <= 3) return 4;
-  if (err <= 8) return 3;
-  if (err <= 15) return 2;
-  if (err <= 25) return 1;
-  return 0;
+// ---- Grading ----------------------------------------------------------
+// A guess g for a hand of percentile p is graded by how close it is:
+//   within EASY margin -> Easy, within GOOD -> Good, within HARD -> Hard,
+//   otherwise Wrong.
+//
+// The margin of error GROWS as the hand gets stronger (lower percentile),
+// because premium hands are clustered tightly at the top of the chart, so a
+// given absolute miss there is more forgivable. The base margins below (in
+// percentile points) apply at p = 0 and shrink to TOLERANCE_MIN_FACTOR of
+// that at p = 100. All four numbers are meant to be tuned by feel.
+const TOLERANCE_BASE = { easy: 20, good: 30, hard: 40 };
+const TOLERANCE_MIN_FACTOR = 0.35; // margin at p=100 as a fraction of the base
+
+// Absolute point-margin allowed at percentile p for a given base margin.
+function toleranceAt(p, base) {
+  const factor = 1 - (1 - TOLERANCE_MIN_FACTOR) * (p / 100);
+  return base * factor;
+}
+
+// The three (Easy/Good/Hard) margins for a given percentile.
+function tolerancesFor(p) {
+  return {
+    easy: toleranceAt(p, TOLERANCE_BASE.easy),
+    good: toleranceAt(p, TOLERANCE_BASE.good),
+    hard: toleranceAt(p, TOLERANCE_BASE.hard)
+  };
+}
+
+const GRADE_QUALITY = { easy: 5, good: 4, hard: 3, wrong: 1 };
+
+// Grade a guess. Returns { grade, quality, err, tol:{easy,good,hard} }.
+function gradeGuess(p, g) {
+  const err = Math.abs(g - p);
+  const tol = tolerancesFor(p);
+  let grade;
+  if (err <= tol.easy) grade = 'easy';
+  else if (err <= tol.good) grade = 'good';
+  else if (err <= tol.hard) grade = 'hard';
+  else grade = 'wrong';
+  return { grade, quality: GRADE_QUALITY[grade], err, tol };
 }
 
 // Apply an SM-2 update. quality 0-5. now = current timestamp.
